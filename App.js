@@ -8,7 +8,8 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import { LoginManager } from 'react-native-fbsdk'
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -17,14 +18,60 @@ const instructions = Platform.select({
     'Shake or press menu button for dev menu',
 });
 
+
+
 type Props = {};
 export default class App extends Component<Props> {
+
+  _onLoginFbPress = async () => {
+    this.setState({ loading: true });
+
+    let res;
+    try {
+      res = await LoginManager.logInWithReadPermissions([
+        'public_profile',
+        'email',
+      ]);
+    } catch (error) {
+      console.log('====================================');
+      console.log('error', error);
+      console.log('====================================');
+    }
+
+    if (res.grantedPermissions && !res.isCancelled) {
+      const data = await AccessToken.getCurrentAccessToken();
+
+      if (data) {
+        const serverResponse = await this.props.loginMutation({
+          variables: {
+            provider: 'FACEBOOK',
+            token: data.accessToken,
+          },
+        });
+
+        const { token } = serverResponse.data.login;
+
+        try {
+          await AsyncStorage.setItem(authToken, token);
+
+          this.setState({ loading: false });
+
+          startMainApp();
+        } catch (error) {
+          throw error;
+        }
+      }
+    }
+  };
+
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+      <View>
+        <TouchableOpacity
+          onPress={this._onLoginFbPress}
+          style={styles.fbLoginBtn}>   
+          <Text>Login</Text>     
+        </TouchableOpacity>
       </View>
     );
   }
@@ -36,6 +83,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  fbLoginBtn: {
+    flexDirection: 'row',
+    height: 50,
+    alignItems: 'center',
   },
   welcome: {
     fontSize: 20,
