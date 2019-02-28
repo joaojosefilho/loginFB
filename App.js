@@ -27,37 +27,37 @@ export default class App extends Component<Props> {
     let res;
     try {
       res = await LoginManager.logInWithReadPermissions([
+        'public_profile',
         'email'
-        //'email',
       ]);
     } catch (error) {
       alert('Login failed with error: ' + error);
     }
 
-    // if (res.grantedPermissions && !res.isCancelled) {
-    //   const data = await AccessToken.getCurrentAccessToken();
+    if (res.grantedPermissions && !res.isCancelled) {
+      const data = await AccessToken.getCurrentAccessToken();
 
-    //   if (data) {
-    //     const serverResponse = await this.props.loginMutation({
-    //       variables: {
-    //         provider: 'FACEBOOK',
-    //         token: data.accessToken,
-    //       },
-    //     });
+      if (data) {
+        const serverResponse = await this.props.loginMutation({
+          variables: {
+            provider: 'FACEBOOK',
+            token: data.accessToken,
+          },
+        });
 
-    //     const { token } = serverResponse.data.login;
+        const { token } = serverResponse.data.login;
 
-    //     try {
-    //       await AsyncStorage.setItem(authToken, token);
+        try {
+          await AsyncStorage.setItem(authToken, token);
 
-    //       this.setState({ loading: false });
+          this.setState({ loading: false });
 
-    //       startMainApp();
-    //     } catch (error) {
-    //       throw error;
-    //     }
-    //   }
-    // }
+          startMainApp();
+        } catch (error) {
+          throw error;
+        }
+      }
+    }
   };
 
   render() {
